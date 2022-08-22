@@ -46,9 +46,14 @@ class ItemToItemBatchSampler(IterableDataset):
                 self.g,
                 heads,
                 metapath=[self.item_to_user_etype, self.user_to_item_etype])[0][:, 2]
+
+            #Select random item nodes ids for the negative sample
             neg_tails = torch.randint(0, self.g.num_nodes(self.item_type), (self.batch_size,))
 
+            #If a random walk has no path left, it will return a -1 to match the metapath lenght
             mask = (tails != -1)
+
+            #We return the three items
             yield heads[mask], tails[mask], neg_tails[mask]
 
 class NeighborSampler(object):
