@@ -36,7 +36,12 @@ class ItemToItemBatchSampler(IterableDataset):
 
     def __iter__(self):
         while True:
+            #Select random item nodes ids.
             heads = torch.randint(0, self.g.num_nodes(self.item_type), (self.batch_size,))
+
+            #Generate random walks starting from the previous random nodes selected.
+            #We will start from the selected item node, then we go through a user
+            #Finally we come back to an item node. That's why we select [0][:, 2].
             tails = dgl.sampling.random_walk(
                 self.g,
                 heads,
