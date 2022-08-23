@@ -24,6 +24,7 @@ import torch
 import torchtext
 from builder import PandasGraphBuilder
 from data_utils import *
+import datetime
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -37,88 +38,59 @@ if __name__ == '__main__':
     ## Build heterogeneous graph
 
     # Load data
-    users = []
-    with open(os.path.join(directory, 'users.dat'), encoding='latin1') as f:
-        for l in f:
-            id_, gender, age, occupation, zip_ = l.strip().split('::')
-            users.append({
-                'user_id': int(id_),
-                'gender': gender,
-                'age': age,
-                'occupation': occupation,
-                'zip': zip_,
-                })
-    users = pd.DataFrame(users).astype('category')
-
-    movies = []
-    with open(os.path.join(directory, 'movies.dat'), encoding='latin1') as f:
-        for l in f:
-            id_, title, genres = l.strip().split('::')
-            genres_set = set(genres.split('|'))
-
-            # extract year
-            assert re.match(r'.*\([0-9]{4}\)$', title)
-            year = title[-5:-1]
-            title = title[:-6].strip()
-
-            data = {'movie_id': int(id_), 'title': title, 'year': year}
-            for g in genres_set:
-                data[g] = True
-            movies.append(data)
-    movies = pd.DataFrame(movies).astype({'year': 'category'})
-
-    ratings = []
-    with open(os.path.join(directory, 'ratings.dat'), encoding='latin1') as f:
-        for l in f:
-            user_id, movie_id, rating, timestamp = [int(_) for _ in l.split('::')]
-            ratings.append({
-                'user_id': user_id,
-                'movie_id': movie_id,
-                'rating': rating,
-                'timestamp': timestamp,
-                })
-    ratings = pd.DataFrame(ratings)
+    users = pd.read_csv('data_fork//users.csv').astype('category')
+    movies = pd.read_csv('data_fork//items.csv').astype('category').drop('subcat_comercial', axis = 1)
+    ratings = pd.read_csv('data_fork//purchases.csv')
+    ratings['timestamp'] = [np.random.choice(pd.date_range(datetime.datetime(2013,1,1),datetime.datetime(2020,1,3))) for i in range(len(ratings))]
 
     # Filter the users and items that never appear in the rating table.
-    distinct_users_in_ratings = ratings['user_id'].unique()
-    distinct_movies_in_ratings = ratings['movie_id'].unique()
-    users = users[users['user_id'].isin(distinct_users_in_ratings)]
-    movies = movies[movies['movie_id'].isin(distinct_movies_in_ratings)]
+    distinct_users_in_ratings = ratings['UserID'].unique()
+    distinct_movies_in_ratings = ratings['ItemID'].unique()
+    users = users[users['UserID'].isin(distinct_users_in_ratings)]
+    movies = movies[movies['ItemID'].isin(distinct_movies_in_ratings)]
+
+    print(movies)
+    print(users)
 
     # Group the movie features into genres (a vector), year (a category), title (a string)
-    genre_columns = movies.columns.drop(['movie_id', 'title', 'year'])
-    movies[genre_columns] = movies[genre_columns].fillna(False).astype('bool')
-    movies_categorical = movies.drop('title', axis=1)
+    # genre_columns = movies.columns.drop(['movie_id', 'title', 'year'])
+    # movies[genre_columns] = movies[genre_columns].fillna(False).astype('bool')
+    # movies_categorical = movies.drop('title', axis=1)
 
     # Build graph
     graph_builder = PandasGraphBuilder()
-    graph_builder.add_entities(users, 'user_id', 'user')
-    graph_builder.add_entities(movies_categorical, 'movie_id', 'movie')
-    graph_builder.add_binary_relations(ratings, 'user_id', 'movie_id', 'watched')
-    graph_builder.add_binary_relations(ratings, 'movie_id', 'user_id', 'watched-by')
+    graph_builder.add_entities(users, 'UserID', 'user')
+    graph_builder.add_entities(movies, 'ItemID', 'movie')
+    graph_builder.add_binary_relations(ratings, 'UserID', 'ItemID', 'watched')
+    graph_builder.add_binary_relations(ratings, 'ItemID', 'UserID', 'watched-by')
 
     g = graph_builder.build()
 
     # Assign features.
     # Note that variable-sized features such as texts or images are handled elsewhere.
-    g.nodes['user'].data['gender'] = torch.LongTensor(users['gender'].cat.codes.values)
-    g.nodes['user'].data['age'] = torch.LongTensor(users['age'].cat.codes.values)
-    g.nodes['user'].data['occupation'] = torch.LongTensor(users['occupation'].cat.codes.values)
-    g.nodes['user'].data['zip'] = torch.LongTensor(users['zip'].cat.codes.values)
+    g.nodes['user'].data['usuario_id_crp'] = torch.LongTensor(users['usuario_id_crp'].cat.codes.values)
 
-    g.nodes['movie'].data['year'] = torch.LongTensor(movies['year'].cat.codes.values)
-    g.nodes['movie'].data['genre'] = torch.FloatTensor(movies[genre_columns].values)
+    g.nodes['movie'].data['salado'] = torch.LongTensor(movies['salado'].cat.codes.values)
+    g.nodes['movie'].data['dulce'] = torch.LongTensor(movies['dulce'].cat.codes.values)
+    g.nodes['movie'].data['frio'] = torch.LongTensor(movies['frio'].cat.codes.values)
+    g.nodes['movie'].data['caliente'] = torch.LongTensor(movies['caliente'].cat.codes.values)
+    g.nodes['movie'].data['harina'] = torch.LongTensor(movies['harina'].cat.codes.values)
+    g.nodes['movie'].data['carne'] = torch.LongTensor(movies['carne'].cat.codes.values)
+    g.nodes['movie'].data['familiar'] = torch.LongTensor(movies['familiar'].cat.codes.values)
+    g.nodes['movie'].data['individual'] = torch.LongTensor(movies['individual'].cat.codes.values)
+    g.nodes['movie'].data['bebestible'] = torch.LongTensor(movies['bebestible'].cat.codes.values)
+    g.nodes['movie'].data['hojas'] = torch.LongTensor(movies['hojas'].cat.codes.values)
+    g.nodes['movie'].data['lacteo'] = torch.LongTensor(movies['lacteo'].cat.codes.values)
+    g.nodes['movie'].data['alcohol'] = torch.LongTensor(movies['alcohol'].cat.codes.values)
 
-    g.edges['watched'].data['rating'] = torch.LongTensor(ratings['rating'].values)
-    g.edges['watched'].data['timestamp'] = torch.LongTensor(ratings['timestamp'].values)
-    g.edges['watched-by'].data['rating'] = torch.LongTensor(ratings['rating'].values)
-    g.edges['watched-by'].data['timestamp'] = torch.LongTensor(ratings['timestamp'].values)
+    g.edges['watched'].data['Q_compra'] = torch.LongTensor(ratings['Q_compra'].values)
+    g.edges['watched-by'].data['Q_compra'] = torch.LongTensor(ratings['Q_compra'].values)
 
     # Train-validation-test split
     # This is a little bit tricky as we want to select the last interaction for test, and the
     # second-to-last interaction for validation.
-    train_indices, val_indices, test_indices = train_test_split_by_time(ratings, 'timestamp', 'user_id')
-
+    train_indices, val_indices, test_indices = train_test_split_by_time(ratings, 'timestamp', 'UserID')
+    print(g)
     # Build the graph with training interactions only.
     train_g = build_train_graph(g, train_indices, 'user', 'movie', 'watched', 'watched-by')
     assert train_g.out_degrees(etype='watched').min() > 0
@@ -128,7 +100,7 @@ if __name__ == '__main__':
 
     ## Build title set
 
-    movie_textual_dataset = {'title': movies['title'].values}
+    # movie_textual_dataset = {'title': movies['title'].values}
 
     # The model should build their own vocabulary and process the texts.  Here is one example
     # of using torchtext to pad and numericalize a batch of strings.
@@ -145,7 +117,7 @@ if __name__ == '__main__':
     dataset = {
         'val-matrix': val_matrix,
         'test-matrix': test_matrix,
-        'item-texts': movie_textual_dataset,
+        'item-texts': None,
         'item-images': None,
         'user-type': 'user',
         'item-type': 'movie',
