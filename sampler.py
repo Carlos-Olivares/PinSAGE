@@ -112,79 +112,76 @@ def assign_simple_node_features(ndata, g, ntype, assign_id=False):
         induced_nodes = ndata[dgl.NID]
         ndata[col] = g.nodes[ntype].data[col][induced_nodes]
 
-def assign_textual_node_features(ndata, textset, ntype):
-    """
-    Assigns numericalized tokens from a torchtext dataset to given block.
+# def assign_textual_node_features(ndata, textset, ntype):
+#     """
+#     Assigns numericalized tokens from a torchtext dataset to given block.
 
-    The numericalized tokens would be stored in the block as node features
-    with the same name as ``field_name``.
+#     The numericalized tokens would be stored in the block as node features
+#     with the same name as ``field_name``.
 
-    The length would be stored as another node feature with name
-    ``field_name + '__len'``.
+#     The length would be stored as another node feature with name
+#     ``field_name + '__len'``.
 
-    block : DGLHeteroGraph
-        First element of the compacted blocks, with "dgl.NID" as the
-        corresponding node ID in the original graph, hence the index to the
-        text dataset.
+#     block : DGLHeteroGraph
+#         First element of the compacted blocks, with "dgl.NID" as the
+#         corresponding node ID in the original graph, hence the index to the
+#         text dataset.
 
-        The numericalized tokens (and lengths if available) would be stored
-        onto the blocks as new node features.
-    textset : torchtext.data.Dataset
-        A torchtext dataset whose number of examples is the same as that
-        of nodes in the original graph.
-    """
-    node_ids = ndata[dgl.NID].numpy()
+#         The numericalized tokens (and lengths if available) would be stored
+#         onto the blocks as new node features.
+#     textset : torchtext.data.Dataset
+#         A torchtext dataset whose number of examples is the same as that
+#         of nodes in the original graph.
+#     """
+#     node_ids = ndata[dgl.NID].numpy()
 
-    for field_name, field in textset.items():
-        textlist, vocab, pad_var, batch_first = field
+#     for field_name, field in textset.items():
+#         textlist, vocab, pad_var, batch_first = field
         
-        examples = [textlist[i] for i in node_ids]
-        ids_iter = numericalize_tokens_from_iterator(vocab, examples)
+#         examples = [textlist[i] for i in node_ids]
+#         ids_iter = numericalize_tokens_from_iterator(vocab, examples)
         
-        maxsize = max([len(textlist[i]) for i in node_ids])
-        ids = next(ids_iter)
-        x = torch.asarray([num for num in ids])
-        lengths = torch.tensor([len(x)])
-        tokens = padding(x, maxsize, pad_var)
+#         maxsize = max([len(textlist[i]) for i in node_ids])
+#         ids = next(ids_iter)
+#         x = torch.asarray([num for num in ids])
+#         lengths = torch.tensor([len(x)])
+#         tokens = padding(x, maxsize, pad_var)
 
-        for ids in ids_iter:
-            x = torch.asarray([num for num in ids])
-            l = torch.tensor([len(x)])
-            y = padding(x, maxsize, pad_var)
-            tokens = torch.vstack((tokens,y))
-            lengths = torch.cat((lengths, l))
+#         for ids in ids_iter:
+#             x = torch.asarray([num for num in ids])
+#             l = torch.tensor([len(x)])
+#             y = padding(x, maxsize, pad_var)
+#             tokens = torch.vstack((tokens,y))
+#             lengths = torch.cat((lengths, l))
        
-        if not batch_first:
-            tokens = tokens.t()
+#         if not batch_first:
+#             tokens = tokens.t()
 
-        ndata[field_name] = tokens
-        ndata[field_name + '__len'] = lengths
+#         ndata[field_name] = tokens
+#         ndata[field_name + '__len'] = lengths
 
-def assign_features_to_blocks(blocks, g, textset, ntype):
+def assign_features_to_blocks(blocks, g, ntype):
     # For the first block (which is closest to the input), copy the features from
     # the original graph as well as the texts.
     assign_simple_node_features(blocks[0].srcdata, g, ntype)
-    assign_textual_node_features(blocks[0].srcdata, textset, ntype)
     assign_simple_node_features(blocks[-1].dstdata, g, ntype)
-    assign_textual_node_features(blocks[-1].dstdata, textset, ntype)
 
 class PinSAGECollator(object):
-    def __init__(self, sampler, g, ntype, textset):
+    def __init__(self, sampler, g, ntype):
         self.sampler = sampler
         self.ntype = ntype
         self.g = g
-        self.textset = textset
 
     def collate_train(self, batches):
         heads, tails, neg_tails = batches[0]
         # Construct multilayer neighborhood via PinSAGE...
         pos_graph, neg_graph, blocks = self.sampler.sample_from_item_pairs(heads, tails, neg_tails)
-        assign_features_to_blocks(blocks, self.g, self.textset, self.ntype)
+        assign_features_to_blocks(blocks, self.g, self.ntype)
 
         return pos_graph, neg_graph, blocks
 
     def collate_test(self, samples):
         batch = torch.LongTensor(samples)
         blocks = self.sampler.sample_blocks(batch)
-        assign_features_to_blocks(blocks, self.g, self.textset, self.ntype)
+        assign_features_to_blocks(blocks, self.g, self.ntype)
         return blocks

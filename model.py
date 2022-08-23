@@ -16,10 +16,10 @@ from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 
 class PinSAGEModel(nn.Module):
-    def __init__(self, full_graph, ntype, textsets, hidden_dims, n_layers):
+    def __init__(self, full_graph, ntype, hidden_dims, n_layers):
         super().__init__()
 
-        self.proj = layers.LinearProjector(full_graph, ntype, textsets, hidden_dims)
+        self.proj = layers.LinearProjector(full_graph, ntype, hidden_dims)
         self.sage = layers.SAGENet(hidden_dims, n_layers)
         self.scorer = layers.ItemToItemScorer(full_graph, ntype)
 
@@ -38,7 +38,7 @@ def train(dataset, args):
     g = dataset['train-graph']
     val_matrix = dataset['val-matrix'].tocsr()
     test_matrix = dataset['test-matrix'].tocsr()
-    item_texts = dataset['item-texts']
+    # item_texts = dataset['item-texts']
     user_ntype = dataset['user-type']
     item_ntype = dataset['item-type']
     user_to_item_etype = dataset['user-to-item-type']
@@ -52,19 +52,19 @@ def train(dataset, args):
     g.nodes[item_ntype].data['id'] = torch.arange(g.num_nodes(item_ntype))
 
     # Prepare torchtext dataset and Vocabulary
-    textset = {}
-    tokenizer = get_tokenizer(None)
+    # textset = {}
+    # tokenizer = get_tokenizer(None)
 
-    textlist = []
-    batch_first = True
+    # textlist = []
+    # batch_first = True
 
-    for i in range(g.num_nodes(item_ntype)):
-        for key in item_texts.keys():
-            l = tokenizer(item_texts[key][i].lower())
-            textlist.append(l)
-    for key, field in item_texts.items():
-        vocab2 = build_vocab_from_iterator(textlist, specials=["<unk>","<pad>"])
-        textset[key] = (textlist, vocab2, vocab2.get_stoi()['<pad>'], batch_first)
+    # for i in range(g.num_nodes(item_ntype)):
+    #     for key in item_texts.keys():
+    #         l = tokenizer(item_texts[key][i].lower())
+    #         textlist.append(l)
+    # for key, field in item_texts.items():
+    #     vocab2 = build_vocab_from_iterator(textlist, specials=["<unk>","<pad>"])
+    #     textset[key] = (textlist, vocab2, vocab2.get_stoi()['<pad>'], batch_first)
 
     # Sampler
     batch_sampler = sampler_module.ItemToItemBatchSampler(
@@ -73,7 +73,7 @@ def train(dataset, args):
         g, user_ntype, item_ntype, args.random_walk_length,
         args.random_walk_restart_prob, args.num_random_walks, args.num_neighbors,
         args.num_layers)
-    collator = sampler_module.PinSAGECollator(neighbor_sampler, g, item_ntype, textset)
+    collator = sampler_module.PinSAGECollator(neighbor_sampler, g, item_ntype)
     dataloader = DataLoader(
         batch_sampler,
         collate_fn=collator.collate_train,
@@ -86,7 +86,7 @@ def train(dataset, args):
     dataloader_it = iter(dataloader)
 
     # Model
-    model = PinSAGEModel(g, item_ntype, textset, args.hidden_dims, args.num_layers).to(device)
+    model = PinSAGEModel(g, item_ntype, args.hidden_dims, args.num_layers).to(device)
     # Optimizer
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 

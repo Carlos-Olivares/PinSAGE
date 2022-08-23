@@ -84,7 +84,9 @@ if __name__ == '__main__':
     g.nodes['movie'].data['alcohol'] = torch.LongTensor(movies['alcohol'].cat.codes.values)
 
     g.edges['watched'].data['Q_compra'] = torch.LongTensor(ratings['Q_compra'].values)
+    g.edges['watched'].data['timestamp'] = torch.LongTensor(ratings['timestamp'].values)
     g.edges['watched-by'].data['Q_compra'] = torch.LongTensor(ratings['Q_compra'].values)
+    g.edges['watched-by'].data['timestamp'] = torch.LongTensor(ratings['timestamp'].values)
 
     # Train-validation-test split
     # This is a little bit tricky as we want to select the last interaction for test, and the
