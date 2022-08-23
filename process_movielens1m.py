@@ -42,7 +42,7 @@ if __name__ == '__main__':
     movies = pd.read_csv('data_fork//items.csv').astype('category').drop('subcat_comercial', axis = 1)
     ratings = pd.read_csv('data_fork//purchases.csv')
     ratings['timestamp'] = [np.random.choice(pd.date_range(datetime.datetime(2013,1,1),datetime.datetime(2020,1,3))) for i in range(len(ratings))]
-
+    ratings['timestamp'] = ratings['timestamp'].astype(int)
     # Filter the users and items that never appear in the rating table.
     distinct_users_in_ratings = ratings['UserID'].unique()
     distinct_movies_in_ratings = ratings['ItemID'].unique()
