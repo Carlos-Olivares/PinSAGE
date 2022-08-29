@@ -9,7 +9,7 @@ def disable_grad(module):
     for param in module.parameters():
         param.requires_grad = False
 
-def _init_input_modules(g, ntype, textset, hidden_dims):
+def _init_input_modules(g, ntype, hidden_dims):
     # We initialize the linear projections of each input feature ``x`` as
     # follows:
     # * If ``x`` is a scalar integral feature, we assume that ``x`` is a categorical
@@ -35,10 +35,10 @@ def _init_input_modules(g, ntype, textset, hidden_dims):
             nn.init.xavier_uniform_(m.weight)
             module_dict[column] = m
 
-    if textset is not None:
-        for column, field in textset.items():
-            textlist, vocab, pad_var, batch_first = field            
-            module_dict[column] = BagOfWords(vocab, hidden_dims)
+    # if textset is not None:
+    #     for column, field in textset.items():
+    #         textlist, vocab, pad_var, batch_first = field            
+    #         module_dict[column] = BagOfWords(vocab, hidden_dims)
 
     return module_dict
 
@@ -58,11 +58,11 @@ class LinearProjector(nn.Module):
     """
     Projects each input feature of the graph linearly and sums them up
     """
-    def __init__(self, full_graph, ntype, textset, hidden_dims):
+    def __init__(self, full_graph, ntype, hidden_dims):
         super().__init__()
 
         self.ntype = ntype
-        self.inputs = _init_input_modules(full_graph, ntype, textset, hidden_dims)
+        self.inputs = _init_input_modules(full_graph, ntype, hidden_dims)
 
     def forward(self, ndata):
         projections = []

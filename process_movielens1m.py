@@ -96,3 +96,5 @@ if __name__ == '__main__':
 
     with open(os.path.join(out_directory, 'data.pkl'), 'wb') as f:
         pickle.dump(dataset, f)
+
+    ratings_test.to_csv(os.path.join(out_directory, 'testing_set.csv'))
