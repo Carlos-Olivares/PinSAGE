@@ -74,6 +74,7 @@ def train(dataset, args):
 
     # For each batch of head-tail-negative triplets...
     for epoch_id in range(args.num_epochs):
+        print(f'Epoch {epoch_id}/{args.num_epochs}')
         model.train()
         for batch_id in tqdm.trange(args.batches_per_epoch):
             pos_graph, neg_graph, blocks = next(dataloader_it)
