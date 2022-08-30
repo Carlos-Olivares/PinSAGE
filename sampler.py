@@ -49,6 +49,10 @@ class ItemToItemBatchSampler(IterableDataset):
 
             #Select random item nodes ids for the negative sample
             neg_tails = torch.randint(0, self.g.num_nodes(self.item_type), (self.batch_size,))
+            # neg_tails = dgl.sampling.random_walk(
+            #     self.g,
+            #     heads,
+            #     metapath=[self.item_to_user_etype, self.user_to_item_etype] * 3)[0][:, 6]
 
             #If a random walk has no path left, it will return a -1 to match the metapath lenght
             mask = (tails != -1)

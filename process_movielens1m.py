@@ -39,10 +39,10 @@ if __name__ == '__main__':
     # Load data
     users = pd.read_csv(os.path.join(directory, 'carts.csv')) #.astype('category')
     
-    movies = pd.read_csv(os.path.join(directory, 'items.csv')).astype('category')
+    movies = pd.read_csv(os.path.join(directory, 'items.csv')).sort_values('ItemID', ascending = True).reset_index(drop=True)#.astype('category')
     movies = movies.drop(['subcat_comercial'], axis = 1)
 
-    ratings = pd.read_csv(os.path.join(directory, 'purchases.csv')).astype('category')
+    ratings = pd.read_csv(os.path.join(directory, 'purchases.csv'))#.astype('category')
 
     # Split train - test set
     ratings_train = ratings.query('test_set == 0').drop('test_set', axis = 1)
@@ -53,6 +53,10 @@ if __name__ == '__main__':
     distinct_movies_in_ratings = ratings_train['ItemID'].unique()
     users = users[users['venta_id_crp'].isin(distinct_users_in_ratings)]
     movies = movies[movies['ItemID'].isin(distinct_movies_in_ratings)]
+
+    users = users.astype('category')
+    movies = movies.astype('category')
+    ratings = ratings.astype('category')
 
     # # Build graph
     graph_builder = PandasGraphBuilder()
@@ -83,6 +87,7 @@ if __name__ == '__main__':
 
     # # Build the graph with training interactions only.
     train_g = g #build_train_graph(g, train_indices, 'user', 'movie', 'watched', 'watched-by')
+    print(g)
     assert train_g.out_degrees(etype='watched').min() > 0
 
     dgl.save_graphs(os.path.join(out_directory, 'train_g.bin'), train_g)
