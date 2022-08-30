@@ -27,7 +27,7 @@ class PinSAGEModel(nn.Module):
         h_item = self.get_repr(blocks)
         pos_score = self.scorer(pos_graph, h_item)
         neg_score = self.scorer(neg_graph, h_item)
-        return (neg_score - pos_score + 1).clamp(min=0)
+        return (neg_score - pos_score + 2).clamp(min=0)
 
     def get_repr(self, blocks):
         h_item = self.proj(blocks[0].srcdata)
