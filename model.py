@@ -116,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument('--hidden-dims', type=int, default=256) #256
     parser.add_argument('--batch-size', type=int, default=8)
     parser.add_argument('--device', type=str, default='cpu')        # can also be "cuda:0"
-    parser.add_argument('--num-epochs', type=int, default=10000)
+    parser.add_argument('--num-epochs', type=int, default=5000)
     parser.add_argument('--batches-per-epoch', type=int, default=3)
     parser.add_argument('--num-workers', type=int, default=2)
     parser.add_argument('--lr', type=float, default=0.001)
