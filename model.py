@@ -87,13 +87,16 @@ def train(dataset, args):
             neg_graph = neg_graph.to(device)
 
             loss = model(pos_graph, neg_graph, blocks).mean()
-            cost_evol.append(loss.item())
+
+            if batch_id == args.batches_per_epoch-1:
+              cost_evol.append(loss.item())
+
             opt.zero_grad()
             loss.backward()
             opt.step()
 
         # Evaluate
-        if epoch_id % 1000 == 0:
+        if ((epoch_id % 1000 == 0) and (epoch_id != 0)):
           model.eval()
           with torch.no_grad():
               item_batches = torch.arange(g.num_nodes(item_ntype)).split(args.batch_size)
@@ -126,7 +129,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-epochs', type=int, default=5000)
     parser.add_argument('--batches-per-epoch', type=int, default=3)
     parser.add_argument('--num-workers', type=int, default=2)
-    parser.add_argument('--lr', type=float, default=0.001)
+    parser.add_argument('--lr', type=float, default=0.00001)
     # parser.add_argument('-k', type=int, default=10)
     args = parser.parse_args()
 

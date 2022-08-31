@@ -40,7 +40,7 @@ if __name__ == '__main__':
     users = pd.read_csv(os.path.join(directory, 'carts.csv')) #.astype('category')
     
     movies = pd.read_csv(os.path.join(directory, 'items.csv')).sort_values('ItemID', ascending = True).reset_index(drop=True)#.astype('category')
-    movies = movies.drop(['subcat_comercial'], axis = 1)
+    
 
     ratings = pd.read_csv(os.path.join(directory, 'purchases.csv'))#.astype('category')
 
@@ -57,6 +57,10 @@ if __name__ == '__main__':
     users = users.astype('category')
     movies = movies.astype('category')
     ratings = ratings.astype('category')
+
+    #Save new ids
+    movies.to_csv('data_fork//new_items.csv', index = False)
+    movies = movies.drop(['subcat_comercial'], axis = 1)
 
     # # Build graph
     graph_builder = PandasGraphBuilder()
