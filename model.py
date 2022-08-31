@@ -107,7 +107,7 @@ def train(dataset, args):
             # print(evaluation.evaluate_nn(dataset, h_item, args.k, args.batch_size))
 
             if epoch_id % 1000 == 0:
-              torch.save(h_item, f"embeddings_{epoch_id}.pth")
+              torch.save(h_item, f"embeddings_epochs//embeddings_{epoch_id}.pth")
     
     cost_evol = pd.DataFrame(cost_evol)
     cost_evol.to_csv('Cost_Evolution.csv')
