@@ -87,28 +87,27 @@ def train(dataset, args):
             neg_graph = neg_graph.to(device)
 
             loss = model(pos_graph, neg_graph, blocks).mean()
-            cost_evol.append(loss)
+            cost_evol.append(loss.item())
             opt.zero_grad()
             loss.backward()
             opt.step()
 
         # Evaluate
-        model.eval()
-        with torch.no_grad():
-            item_batches = torch.arange(g.num_nodes(item_ntype)).split(args.batch_size)
-            h_item_batches = []
-            for blocks in dataloader_test:
-                for i in range(len(blocks)):
-                    blocks[i] = blocks[i].to(device)
+        if epoch_id % 1000 == 0:
+          model.eval()
+          with torch.no_grad():
+              item_batches = torch.arange(g.num_nodes(item_ntype)).split(args.batch_size)
+              h_item_batches = []
+              for blocks in dataloader_test:
+                  for i in range(len(blocks)):
+                      blocks[i] = blocks[i].to(device)
 
-                h_item_batches.append(model.get_repr(blocks))
-            h_item = torch.cat(h_item_batches, 0)
+                  h_item_batches.append(model.get_repr(blocks))
+              h_item = torch.cat(h_item_batches, 0)
 
-            # print(evaluation.evaluate_nn(dataset, h_item, args.k, args.batch_size))
-
-            if epoch_id % 1000 == 0:
+              # print(evaluation.evaluate_nn(dataset, h_item, args.k, args.batch_size))
               torch.save(h_item, f"embeddings_epochs//embeddings_{epoch_id}.pth")
-    
+              
     cost_evol = pd.DataFrame(cost_evol)
     cost_evol.to_csv('Cost_Evolution.csv')
 
