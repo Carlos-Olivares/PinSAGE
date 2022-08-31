@@ -8,6 +8,7 @@ import torchtext
 import dgl
 import os
 import tqdm
+import pandas as pd
 
 import layers
 import sampler as sampler_module
@@ -73,6 +74,7 @@ def train(dataset, args):
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     # For each batch of head-tail-negative triplets...
+    cost_evol = []
     for epoch_id in range(args.num_epochs):
         print(f'Epoch {epoch_id}/{args.num_epochs}')
         model.train()
@@ -85,6 +87,7 @@ def train(dataset, args):
             neg_graph = neg_graph.to(device)
 
             loss = model(pos_graph, neg_graph, blocks).mean()
+            cost_evol.append(loss)
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -102,7 +105,12 @@ def train(dataset, args):
             h_item = torch.cat(h_item_batches, 0)
 
             # print(evaluation.evaluate_nn(dataset, h_item, args.k, args.batch_size))
-            torch.save(h_item,"embeddings.pth")
+
+            if epoch_id % 1000 == 0:
+              torch.save(h_item, f"embeddings_{epoch_id}.pth")
+    
+    cost_evol = pd.DataFrame(cost_evol)
+    cost_evol.to_csv('Cost_Evolution.csv')
 
 if __name__ == '__main__':
     # Arguments
