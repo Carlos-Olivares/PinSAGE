@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import torch
 import torch.nn as nn
+# from torch import optim
 from torch.utils.data import DataLoader
 import torchtext
 import dgl
@@ -73,6 +74,8 @@ def train(dataset, args):
     # Optimizer
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
 
+    # scheduler = optim.lr_scheduler.StepLR(opt, step_size=2500, gamma=0.1)
+
     # For each batch of head-tail-negative triplets...
     cost_evol = []
     for epoch_id in range(args.num_epochs):
@@ -94,6 +97,10 @@ def train(dataset, args):
             opt.zero_grad()
             loss.backward()
             opt.step()
+          
+        # #Decay lr  
+        # scheduler.step()
+        # print(f'LR:{opt.param_groups[0]["lr"]}')
 
         # Evaluate
         if ((epoch_id % 1000 == 0) and (epoch_id != 0)):
@@ -129,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-epochs', type=int, default=5000)
     parser.add_argument('--batches-per-epoch', type=int, default=3)
     parser.add_argument('--num-workers', type=int, default=2)
-    parser.add_argument('--lr', type=float, default=0.00001)
+    parser.add_argument('--lr', type=float, default=0.0001)
     # parser.add_argument('-k', type=int, default=10)
     args = parser.parse_args()
 
