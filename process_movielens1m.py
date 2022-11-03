@@ -37,12 +37,21 @@ if __name__ == '__main__':
     ## Build heterogeneous graph
 
     # Load data
-    users = pd.read_csv(os.path.join(directory, 'carts.csv')) #.astype('category')
+    users = pd.read_csv(os.path.join(directory, 'carritos.csv')) #.astype('category')
     
-    movies = pd.read_csv(os.path.join(directory, 'items.csv')).sort_values('ItemID', ascending = True).reset_index(drop=True)#.astype('category')
-    
+    movies = pd.read_csv(os.path.join(directory, 'products.csv')).sort_values('ItemID', ascending = True).reset_index(drop=True)#.astype('category')
+    movies['subcat_comercial'] = movies['subcat_comercial'].apply(lambda x: str(x).replace('galletas_saladas', 'galleta_salada'))
+    #movies = movies[movies['subcat_comercial']!='escabeche_encurtido']
+    ratings = pd.read_csv(os.path.join(directory, 'full_trx.csv'))#.astype('category')
 
-    ratings = pd.read_csv(os.path.join(directory, 'purchases.csv'))#.astype('category')
+    #Get ItemID
+    map_prod_id = movies.set_index('subcat_comercial')['ItemID'].to_dict()
+    ratings['ItemID'] = ratings['subcat_comercial'].map(map_prod_id)
+    # items_from_trx = pd.Series(ratings['subcat_comercial'].unique())
+    # a = pd.Series(movies['subcat_comercial'].unique())
+    # b = pd.Series(ratings['subcat_comercial'].unique())
+    # print(a[~a.isin(b)])
+    # print(b[~b.isin(a)])
 
     # Split train - test set
     ratings_train = ratings.query('test_set == 0').drop('test_set', axis = 1)
@@ -59,7 +68,7 @@ if __name__ == '__main__':
     ratings = ratings.astype('category')
 
     #Save new ids
-    movies.to_csv('data_fork//new_items.csv', index = False)
+    movies.to_csv('data_fork//new_products.csv', index = False)
     movies = movies.drop(['subcat_comercial'], axis = 1)
 
     # # Build graph
