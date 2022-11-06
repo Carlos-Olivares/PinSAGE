@@ -17,6 +17,8 @@ import evaluation
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 
+
+
 class PinSAGEModel(nn.Module):
     def __init__(self, full_graph, ntype, hidden_dims, n_layers):
         super().__init__()
@@ -116,7 +118,7 @@ def train(dataset, args):
               h_item = torch.cat(h_item_batches, 0)
 
               # print(evaluation.evaluate_nn(dataset, h_item, args.k, args.batch_size))
-              torch.save(h_item, f"embeddings_epochs//lr{args.lr}_hd{args.hidden_dims}_nn{args.num_neighbors}_epoch{args.epoch_id}.pth")
+              torch.save(h_item, f"embeddings_epochs//lr{args.lr}_hd{args.hidden_dims}_nn{args.num_neighbors}_epoch{epoch_id}.pth")
               
     cost_evol = pd.DataFrame(cost_evol)
     cost_evol.to_csv('Cost_Evolution.csv')
