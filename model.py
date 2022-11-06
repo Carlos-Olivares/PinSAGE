@@ -116,7 +116,7 @@ def train(dataset, args):
               h_item = torch.cat(h_item_batches, 0)
 
               # print(evaluation.evaluate_nn(dataset, h_item, args.k, args.batch_size))
-              torch.save(h_item, f"embeddings_epochs//embeddings_{epoch_id}.pth")
+              torch.save(h_item, f"embeddings_epochs//lr{args.lr}_hd{args.hidden_dims}_nn{args.num_neighbors}_epoch{args.epoch_id}.pth")
               
     cost_evol = pd.DataFrame(cost_evol)
     cost_evol.to_csv('Cost_Evolution.csv')
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     parser.add_argument('dataset_path', type=str)
     parser.add_argument('--random-walk-length', type=int, default=2)
     parser.add_argument('--random-walk-restart-prob', type=float, default=0.50)
-    parser.add_argument('--num-random-walks', type=int, default=10)
+    parser.add_argument('--num-random-walks', type=int, default=50)
     parser.add_argument('--num-neighbors', type=int, default=3)
     parser.add_argument('--num-layers', type=int, default=2)
     parser.add_argument('--hidden-dims', type=int, default=256) #256
